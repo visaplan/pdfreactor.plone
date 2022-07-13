@@ -1,0 +1,40 @@
+<configure
+    xmlns:genericsetup="http://namespaces.zope.org/genericsetup"
+    xmlns="http://namespaces.zope.org/zope">
+
+  <include package="Products.GenericSetup" file="meta.zcml" />
+
+  <genericsetup:registerProfile
+      name="default"
+      title="pdfreactor.plone"
+      directory="profiles/default"
+      description="PDFreactor integration"
+      provides="Products.GenericSetup.interfaces.EXTENSION"
+      />
+
+  <!-- [ Upgrade steps ... [
+       - adjust the version in ./profiles/default/metadata.xml
+         (das ist die bei Installation *automatisch* angestrebte Version)
+       - Python functionality in setuphandlers.py
+    -->
+  <genericsetup:upgradeStep
+      title="Register PDFreactor connection settings"
+      description="This includes the URL of the PDFreactor server
+                   (if non-default)
+                   and the API key."
+      source="*"
+      destination="1"
+      handler=".setuphandlers.register_settings"
+      profile="pdfreactor.plone:default"
+      />
+
+  <genericsetup:upgradeStep
+      title="(Re-) Load the migration profile"
+      description="This registers the @@pdfreactor-connection-settings form"
+      source="1"
+      destination="2"
+      handler=".setuphandlers.load_profile"
+      profile="pdfreactor.plone:default"
+      />
+
+</configure>

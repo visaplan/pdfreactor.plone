@@ -1,0 +1,73 @@
+<configure
+    xmlns:browser="http://namespaces.zope.org/browser"
+    xmlns="http://namespaces.zope.org/zope">
+
+    <!-- The @@as.pdf view returns an on-the-fly created PDF document,
+         resembling the current context
+      -->
+    <browser:page
+        name="as.pdf"
+        for="Products.CMFCore.interfaces.IContentish"
+        class=".base.Exporter"
+        permission="zope2.View"
+        /><!-- gf: ./base.py
+            -->
+
+    <!-- a very basic config object for the PDFreactor conversion:
+         just inserts the Zope standard cookies needed to export restricted contents
+      -->
+    <browser:page
+        name="pdfreactor-config"
+        for="*"
+        class=".config.BaseSettingsView"
+        permission="zope2.View"
+        allowed_interface=".interfaces.IGetPdfReactorConversionSettings"
+        /><!-- gf: ./config.py
+                   ./interfaces.py
+            -->
+
+    <browser:page
+        name="pdfreactor-connection-settings"
+        for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+        permission="cmf.ManagePortal"
+        class=".controlpanel.ConnectionControlPanelView"
+        /><!-- gf: ./controlpanel.py
+            -->
+
+    <!-- The following views are not yet activated because the are not yet finished;
+         but they might serve as a hint about how to implement your own.
+
+         Both are related; if requesting a (likely large) PDF document asynchronously,
+         you'll want to get notified when it is ready for download,
+         and this is done by callback requests.
+
+    (asynchronous conversions:)
+
+    <browser:page
+        name="request-pdf"
+        for="*"
+        class=".async.AsynchronousExporter"
+        permission="zope2.View"
+        /><!-  gf: ./async.py
+             ->
+
+    (callback target:)
+
+    <browser:page
+        name="pdf-monitor"
+        for="*"
+        class=".monitor.Monitor"
+        permission="zope2.View"
+        /><!-  gf: ./monitor.py
+            -->
+    <include file="profiles.zcml" />
+
+    <!-- [ Statische Ressourcen (++resource++) ... [ -->
+    <include package="plone.resource" file="meta.zcml"/>
+
+    <browser:resourceDirectory
+	name="pdfreactor.plone"
+	directory="resource"
+	/>
+
+</configure>

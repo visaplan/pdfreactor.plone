@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<object
+    name="portal_controlpanel"
+    xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+    i18n:domain="plone">
+<!--
+* we currently don't have own icons yet
+  -->
+
+    <configlet
+        title="PDFreactor connection settings"
+        action_id="pdfreactor.plone.settings"
+        appId="pdfreactor.plone"
+        category="Products"
+        condition_expr=""
+        url_expr="string:${portal_url}/@@pdfreactor-connection-settings"
+        visible="True"
+        i18n:attributes="title">
+            <permission>Manage portal</permission>
+    </configlet>
+
+</object>
+

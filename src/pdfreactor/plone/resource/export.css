@@ -1,0 +1,17 @@
+/* Styles for PDF exports
+ *
+ * This stylesheet is intended to be activated in the PDFreactor conversion settings,
+ * e.g.:
+ *     config.setdefault('userStyleSheets', list)
+ *     config['userStyleSheets'].append({'uri': '++resource++pdfreactor.plone/export.css'})
+ *
+ * see:
+ *   https://www.pdfreactor.com/product/doc/webservice/python.html#Configuration-userStyleSheets
+ *   https://www.pdfreactor.com/product/doc/webservice/python.html#Configuration-integrationStyleSheets
+ */
+nav,
+.plone-toolbar,
+.header,
+.footer {
+    display: none;
+}
