@@ -17,9 +17,10 @@ from pdfreactor.plone.interfaces import (
     IExporter,
     IPdfReactorConnectionSettings,
     )
+from ._mixin import GimmeCookies
 
 
-class Exporter(BrowserView):
+class Exporter(BrowserView, GimmeCookies):
 
     implements(IExporter)
 
@@ -58,6 +59,10 @@ class Exporter(BrowserView):
           Have a look at the pdfreactor.parsecfg package for a browser which
           uses a TTW editable configuration, and for a pluggable configuration
           facility to inject contextual configuration settings as well.
+
+        If you decide to override this method and not use @@pdfreactor-config,
+        you'll most likely need to inject the Zope cookies in another way,
+        e.g calling the getZopeCookies method yourself.
         """
         context = aq_inner(self.context)
         view = getMultiAdapter((context, self.request),
@@ -76,18 +81,27 @@ class Exporter(BrowserView):
 
     def connectionSettings(self):
         """
-        Return a {'headers': ..., 'cookies': ...} dict
+        Override this method to inject a connectionSettings option
 
-        E.g. to create PDF documents from restricted contents,
-        we need to provide cookies.
+        Currently we don't really use connection settings as the PDFreactor API
+        understands them:
 
-        For the basic backend configuration, see the make_reactor method.
+        - the apiKey is attached to the reactor object,
+        - the Zope cookies go in the 'cookies' key of the config option
+          (see @@pdfreactor-config or the getZopeCookies method),
+          and
+        - the license key (unless installed on the PDFreactor server, as
+          recommended) is considered 'config' as well.
+
+        So, this method simply returns None; you might want to override it,
+        e.g. to inject a dictionary to be updated from the server's answer,
+        for repeated requests.
+
+        We might need to support options for this to work; but since options
+        are difficult to un-support, once the have been introduced, we don't
+        support any for now.
         """
-        request = self.request
-        cookies = request.cookies
-        return {
-            'cookies': cookies,
-            }
+        return None  # pep 20.2
 
     def converted_url(self):
         """

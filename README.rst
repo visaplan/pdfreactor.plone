@@ -59,10 +59,10 @@ After restarting your Zope instance, you'll find the package in
 the Quick-Installer or
 the Plone Add-Ons view.
 
-After installing (or *activating*) the package there, go to the Plone registry
+After installing (or *activating*) the package there,
+visit the ``@@pdfreactor-connection-settings`` `view of your Plone instance`_
 to customize your PDFreactor connection settings
-(URL and license and / or API key);
-look for the interface (or *prefix*) "IPdfReactorConnectionSettings".
+(URL and license and / or API key).
 
 For installation instructions regarding the PDFreactor service itself, please
 refer to `PDFreactor Support`_.
@@ -141,6 +141,7 @@ The project is licensed under the MIT License.
 .. _PDFreactor Support: https://www.pdfreactor.com/support/
 .. _PDFreactor Web service documentation: https://www.pdfreactor.com/product/doc/webservice/
 .. _RealObjects: https://www.realobjects.com/
+.. _`view of your Plone instance`: http://localhost:8080/Plone/@@pdfreactor-connection-settings
 .. _zc.buildout: https://pypi.org/project/zc.buildout
 
 .. vim: tw=79 cc=+1 sw=4 sts=4 si et

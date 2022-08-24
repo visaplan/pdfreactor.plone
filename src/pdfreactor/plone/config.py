@@ -8,9 +8,10 @@ from zope.interface import implements
 
 # Local imports:
 from pdfreactor.plone.interfaces import IGetPdfReactorConversionSettings
+from ._mixin import GimmeCookies
 
 
-class BaseSettingsView(BrowserView):
+class BaseSettingsView(BrowserView, GimmeCookies):
     """
     Return a very basic `config` dict e.g. for PDFreactor.convert
 
@@ -28,19 +29,3 @@ class BaseSettingsView(BrowserView):
                 }],
             })
         return config
-
-    def getZopeCookies(self):
-        """
-        Return the Zope cookies as expected by the PDFreactor client API
-
-        When requesting a PDF, we'll always have those cookies!
-        """
-        return {
-            'cookies': [{'key': key, 'value': value}
-                        for (key, value) in self.request.cookies.items()
-                        if key in ('__ac',    # loggedin
-                                   '_ZopeId', # Zope session
-                                   'I18N_LANGUAGE',
-                                   )
-                        ],
-            }
