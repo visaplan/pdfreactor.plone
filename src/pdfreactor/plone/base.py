@@ -46,6 +46,7 @@ from pdfreactor.plone.interfaces import (
     IPdfReactorConnectionSettings,
     )
 from ._mixin import GimmeCookies
+from .utils import check_convert_kwargs
 
 
 class Exporter(BrowserView, GimmeCookies):
@@ -96,9 +97,7 @@ class Exporter(BrowserView, GimmeCookies):
         view = getMultiAdapter((context, self.request),
                                name='pdfreactor-config')
         config = view()
-        config.update({
-            'document': self.converted_url(),
-            })
+        config.update(self.conversionSource())
 
         registry = getToolByName(context, 'portal_registry')
         proxy = registry.forInterface(IPdfReactorConnectionSettings)
@@ -118,8 +117,10 @@ class Exporter(BrowserView, GimmeCookies):
 
     def debug_mode(self, config):
         """
-        If debugging output is requested, modify the given conversion settings
-        dict and return something truish.
+        If debugging output is requested,
+        and if not prohibited (as of the .allow_debug_mode method),
+        modify the given conversion settings dict in-place
+        and return the truish form data.
         """
         form = self.request.form
         debug = form.get('debug', 0)
@@ -177,6 +178,110 @@ class Exporter(BrowserView, GimmeCookies):
         if not method.startswith('/'):
             method = '/' + method
         return base + method
+
+    def conversionSource(self):
+        """
+        Return a dict providing the 'document' "configuration" string
+
+        This may be a URL (like returned by .converted_url, above),
+        or an [X]HTML or XML text.
+
+        By default, we return a URL; override this method to use some
+        ready-to-use text
+        (which frees the PDFreactor service from the need to query your server).
+        """
+        return {'document': self.converted_url()}
+
+    def convert(self, **kwargs):
+        """
+        Convert the context*; the return value type depends on the given args.
+        All options must be given by name.
+
+        Allowed options:
+
+        as_json -- If true, binary must be (and defaults to) false (see below).
+                   Implies the .convert API method.
+
+                   Despite the name, we don't return a JSON string (which is
+                   what the PDFreactor service returns to us)
+                   but a Python dict which contains all available data.
+
+        stream -- if given, we'll use it and write to that stream;
+                  this implies "binary" output
+                  and the use of the PDFreactor API method convertAsBinary.
+                  
+                  The return value will be None.
+
+        async -- Call the convertAsync API method,
+                 and return the documentId (a string),
+                 as returned by the convertAsync API method.
+
+                 You'll need to get the document yourself, e.g. by calling
+                 getDocumentAsBinary.
+
+        binary -- May be combined with a stream option, and implies
+                  convertAsBinary.
+
+                  Unless a stream is given, the binary data of the created PDF
+                  document (or image, if the raster image extension is used)
+                  is returned.
+
+        config -- If not given, we'll call our conversionSource method;
+                  this should return a dict with a 'document' key.
+
+        connectionSettings --
+                  If not given, we'll call our connectionSettings method
+
+        document -- If the config value (see above) doesn't contain a
+                    'document' key, you may specify that "document" (or image)
+                    source yourself.
+
+        """
+        check_convert_kwargs(kwargs)
+        GIVEN = kwargs['_given']
+        config = (
+                kwargs['config'] if 'config' in GIVEN
+                else self.conversionSettings())
+        connectionSettings = (
+                kwargs['connectionSettings'] if 'connectionSettings' in GIVEN
+                else self.connectionSettings())
+        # we currently don't perform any sanity checks here ...
+        # We don't expect any working conversion without a 'document' spec,
+        # though. 
+        if 'document' in GIVEN:
+            if config is None:
+                config = {}
+            config['document'] = kwargs['document']
+
+        ckw = {  # conversion keyword arguments
+            'config': config,
+            'connectionSettings': connectionSettings,
+            }
+        stream = kwargs['stream']
+        if stream is not None:
+            ckw['stream'] = stream
+
+        # now for the conversion.
+        reactor = self.reactor
+        if kwargs['binary']:
+            res = reactor.convertAsBinary(**ckw)
+            if stream is not None:
+                # a stream was specified and written to: 
+                return None
+            return res
+
+        # the following won't take a stream argument;
+        # but that's subject to our check_convert_kwargs function:
+        elif kwargs['async']:
+            doc_id = reactor.convertAsync(**ckw)
+            return doc_id
+        elif kwargs['as_json']:
+            dic = reactor.convert(**ckw)
+            return dic
+        else:
+            raise TypeError('Not binary nor async nor as_json?! '
+                "We'd expect this to be handled "
+                'by the check_convert_kwargs function!')
 
     def __call__(self):
         """
