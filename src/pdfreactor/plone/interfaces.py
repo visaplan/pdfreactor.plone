@@ -44,9 +44,12 @@ class IGetPdfReactorConversionSettings(Interface):
     """
     Return a very basic, non-configurable config dict.
     """
-    # We don't define a similar interface for the connection settings here
-    # because we don't expect so much customization regarding this aspect;
-    # it should be enough to
+
+
+class IGetPdfReactorMathjaxSettings(Interface):
+    """
+    Return a simple script, initializing 3 variables to configure MathJax
+    """
 # ------------------------ ] ... marker interfaces for browser views ]
 
 

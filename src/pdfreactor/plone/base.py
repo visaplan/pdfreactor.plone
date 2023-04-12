@@ -1,6 +1,9 @@
 """
 @@as.pdf browser: simple PDF export
 """
+from urllib import urlencode
+from urlparse import parse_qs, urlsplit
+from urlparse import urlunsplit
 
 # PDFreactor (by RealObjects; Python integration by visaplan GmbH):
 from pdfreactor.api import PDFreactor
@@ -11,6 +14,31 @@ from Products.CMFCore.utils import getToolByName
 from Products.Five.browser import BrowserView
 from zope.component import getMultiAdapter
 from zope.interface import implements
+
+try:
+    # Zope:
+    from Globals import DevelopmentMode
+except ImportError:
+    # Hotfix for Zope 4; how to properly replace this?
+    DevelopmentMode = False
+
+import pkg_resources
+try:
+    pkg_resources.get_distribution('pdfreactor.parsecfg')
+except pkg_resources.DistributionNotFound:
+    HAVE_PARSECFG = 0
+else:
+    from pdfreactor.parsecfg.parse import generate_statements
+    from pdfreactor.parsecfg.oldmethods import convert_api_method
+    HAVE_PARSECFG = 1
+
+try:
+    pkg_resources.get_distribution('visaplan.tools')
+except pkg_resources.DistributionNotFound:
+    HAVE_VTOOLS = 0
+else:
+    from visaplan.tools.debug import pp
+    HAVE_VTOOLS = 1
 
 # Local imports:
 from pdfreactor.plone.interfaces import (
@@ -79,6 +107,39 @@ class Exporter(BrowserView, GimmeCookies):
             config['licenseKey'] = key
         return config
 
+    def allow_debug_mode(self, config):
+        """
+        Do we allow debug mode to be activated?
+
+        Here we do so simply for (Zope2) instances with DevelopmentMode
+        enabled; this might need to be more elaborated, though.
+        """
+        return DevelopmentMode
+
+    def debug_mode(self, config):
+        """
+        If debugging output is requested, modify the given conversion settings
+        dict and return something truish.
+        """
+        form = self.request.form
+        debug = form.get('debug', 0)
+        if not debug:
+            return False
+        elif not self.allow_debug_mode(config):
+            return False
+        if HAVE_PARSECFG and 0:
+            # Currently, this would only give us appendLogs=True;
+            # we want more!
+            # We might make this configurable in a future pdfreactor.parsecfg
+            # release.
+            stmt = list(generate_statements('enableDebugMode()'))[0]
+            convert_api_method(stmt, config, {})
+        else:
+            dbg = config.setdefault('debugSettings', {})
+            # for serious problems, 'appendLogs' probably won't be enough.
+            dbg['all'] = True
+        return {'debug': debug}
+
     def connectionSettings(self):
         """
         Override this method to inject a connectionSettings option
@@ -106,8 +167,16 @@ class Exporter(BrowserView, GimmeCookies):
     def converted_url(self):
         """
         Return the URL to be fed to the PDFreactor service
+
+        This method *consumes* the 'method' query option, if given.
         """
-        return self.context.absolute_url()
+        base = self.context.absolute_url()
+        method = self.request.form.pop('method', None)
+        if not method:
+            return base
+        if not method.startswith('/'):
+            method = '/' + method
+        return base + method
 
     def __call__(self):
         """
@@ -125,6 +194,23 @@ class Exporter(BrowserView, GimmeCookies):
             'config': config,
             'connectionSettings': conn,
             }
+        dic = self.debug_mode(config)
+        if dic:
+            if HAVE_VTOOLS:
+                pp(config=config, dic=dic)
+            parsed = list(urlsplit(config['document']))
+            qs = parsed[3]
+            if qs:
+                query = parse_qs(qs)
+                query.update(dic)
+            else:
+                query = dic
+            qs = urlencode(query)
+            parsed[3] = qs
+            config['document'] = urlunsplit(parsed)
+            if HAVE_VTOOLS:
+                pp(kw=kw)
+
         result = pdfReactor.convertAsBinary(**kw)
         setHeader = self.request.response.setHeader
         setHeader("Content-type", "application/pdf")

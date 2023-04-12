@@ -2,6 +2,27 @@ Changelog
 =========
 
 
+1.0.2 (2023-01-20)
+------------------
+
+New Features:
+
+- For `MathML` support:
+ 
+  - added a `@@pdfreactor-mathjax-vars.js` view (for configuration),
+    and 
+  - a ``++resource++pdfreactor.plone/mathjax2-run.js``
+    script to ease MathJax integration.
+
+  This is not configurable yet, but will likely be, soon.
+
+- The @@as.pdf method supports a `method` option; e.g., call
+  ``.../my/page/@@as.pdf?method=@@from-screeshot`` to create a PDF file from
+  ``.../my/page/@@from-screenshot``.
+
+[tobiasherp]
+
+
 1.0.1 (2022-09-20)
 ------------------
 
@@ -21,3 +42,5 @@ Miscellaneous:
 
 - Initial release.
   [tobiasherp]
+
+.. _MathJax: https://www.mathjax.org

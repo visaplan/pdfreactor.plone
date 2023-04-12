@@ -34,6 +34,20 @@
         /><!-- gf: ./controlpanel.py
             -->
 
+    <browser:pages
+        for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+        permission="zope2.View"
+        class=".config.MathjaxSettingsView"
+        allowed_interface=".interfaces.IGetPdfReactorMathjaxSettings"
+        ><!-- gf: ./config.py
+                  ./interfaces.py
+           -->
+      <browser:page
+          name="pdfreactor-mathjax-vars.js"
+          attribute="text"
+        />
+    </browser:pages>
+
     <!-- The following views are not yet activated because the are not yet finished;
          but they might serve as a hint about how to implement your own.
 
